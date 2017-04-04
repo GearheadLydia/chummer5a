@@ -32,6 +32,7 @@ namespace Chummer
         public int buildNeg = 0;
 		private string _strSelectedQuality = string.Empty;
 		private bool _blnAddAgain = false;
+	    private bool _blnLoading = true;
 		private readonly Character _objCharacter;
 
 		private XmlDocument _objXmlDocument = new XmlDocument();
@@ -52,8 +53,6 @@ namespace Chummer
 
 		private void frmSelectQuality_Load(object sender, EventArgs e)
 		{
-			_objXmlDocument = XmlManager.Instance.Load("qualities.xml");
-
 			foreach (Label objLabel in Controls.OfType<Label>())
 			{
 				if (objLabel.Text.StartsWith("["))
@@ -96,7 +95,7 @@ namespace Chummer
             cboCategory.EndUpdate();
 
             lblBPLabel.Text = LanguageManager.Instance.GetString("Label_Karma");
-
+		    _blnLoading = false;
             BuildQualityList();
         }
 
@@ -301,6 +300,7 @@ namespace Chummer
 		/// </summary>
 		private void BuildQualityList()
 		{
+		    if (_blnLoading) return;
 			List<ListItem> lstQuality = new List<ListItem>();
             XmlDocument objXmlMetatypeDocument = XmlManager.Instance.Load("metatypes.xml");
             XmlDocument objXmlCrittersDocument = XmlManager.Instance.Load("critters.xml");
@@ -357,7 +357,7 @@ namespace Chummer
 
                     if (objXmlQuality["hide"] == null && blnQualityAllowed)
                     {
-                        if (!chkLimitList.Checked || (chkLimitList.Checked && SelectionShared.RequirementsMet(objXmlQuality,false,_objCharacter, IgnoreQuality)))
+                        if (!chkLimitList.Checked || chkLimitList.Checked && SelectionShared.RequirementsMet(objXmlQuality,false,_objCharacter, IgnoreQuality,objXmlMetatypeDocument,objXmlCrittersDocument,_objXmlDocument))
                         {
                             ListItem objItem = new ListItem();
                             objItem.Value = objXmlQuality["name"]?.InnerText;
@@ -437,7 +437,7 @@ namespace Chummer
                     }
 					if (blnQualityAllowed)
 					{
-                        if (!chkLimitList.Checked || chkLimitList.Checked && SelectionShared.RequirementsMet(objXmlQuality, false, _objCharacter, IgnoreQuality))
+                        if (!chkLimitList.Checked || chkLimitList.Checked && SelectionShared.RequirementsMet(objXmlQuality, false, _objCharacter, IgnoreQuality, objXmlMetatypeDocument, objXmlCrittersDocument, _objXmlDocument))
                         {
                             if (objXmlQuality["hide"] == null)
                             {
@@ -490,7 +490,7 @@ namespace Chummer
             _strSelectedQuality = objNode["name"]?.InnerText;
 			_strSelectCategory = objNode["category"]?.InnerText;
 
-			if (!SelectionShared.RequirementsMet(objNode, false, _objCharacter, IgnoreQuality))
+			if (!SelectionShared.RequirementsMet(objNode, false, _objCharacter, IgnoreQuality, null, null, _objXmlDocument))
 				return;
 			DialogResult = DialogResult.OK;
 		}
